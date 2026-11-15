@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/exec"
 	"runtime"
+	"runtime/debug"
 	"strings"
 	"time"
 
@@ -20,6 +21,21 @@ import (
 
 // version is set at release time via -ldflags "-X main.version=...".
 var version = "dev"
+
+// currentVersion is the release version. Release binaries get it from
+// -ldflags; `go install module@vX.Y.Z` sets no ldflags but records the
+// module version in the build info, so that is used instead of "dev".
+func currentVersion() string {
+	if version != "dev" {
+		return version
+	}
+	if info, ok := debug.ReadBuildInfo(); ok {
+		if v := strings.TrimPrefix(info.Main.Version, "v"); v != "" && v != "(devel)" {
+			return v
+		}
+	}
+	return version
+}
 
 const usage = `Grantline -- the agent harness for SRE, DevOps, Platform Engineering and Cloud Security.
 
@@ -63,7 +79,7 @@ func main() {
 	case "config":
 		cmdConfig()
 	case "version":
-		fmt.Println("grantline " + version)
+		fmt.Println("grantline " + currentVersion())
 	default:
 		fmt.Print(usage)
 		os.Exit(1)
