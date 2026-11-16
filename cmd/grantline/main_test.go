@@ -93,3 +93,17 @@ func TestDoctorFailsOnlyForAMissingKeyThatIsRoutedTo(t *testing.T) {
 		t.Fatalf("failures = %d, want 0 with a valid routed key", got)
 	}
 }
+
+func TestCurrentVersionPrefersTheReleaseVersion(t *testing.T) {
+	old := version
+	t.Cleanup(func() { version = old })
+	version = "0.6.0"
+	if got := currentVersion(); got != "0.6.0" {
+		t.Fatalf("currentVersion() = %q, want the -ldflags version", got)
+	}
+	version = "dev"
+	// Under `go test` the main module version is "(devel)", so it stays dev.
+	if got := currentVersion(); got != "dev" {
+		t.Fatalf("currentVersion() = %q, want dev for a local build", got)
+	}
+}
